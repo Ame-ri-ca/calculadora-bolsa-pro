@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Decision Matrix Pro</title>
+<title>Investment Decision Filter</title>
 
 <style>
 body {
@@ -64,22 +64,6 @@ button {
     border: 1px solid #1f2937;
 }
 
-.table {
-    width: 100%;
-    margin-top: 10px;
-    border-collapse: collapse;
-}
-
-td, th {
-    border-bottom: 1px solid #1f2937;
-    padding: 10px;
-    text-align: center;
-}
-
-th {
-    color: #38bdf8;
-}
-
 .green { color: #22c55e; font-weight: bold; }
 .yellow { color: #facc15; font-weight: bold; }
 .red { color: #ef4444; font-weight: bold; }
@@ -88,19 +72,21 @@ th {
 
 <body>
 
-<header>🧠 Decision Matrix Pro</header>
+<header>🧠 Investment Decision Filter</header>
 
 <div class="container">
 
 <div class="card">
-<h3>📊 Datos de tu posición</h3>
 
-<input id="ticker" placeholder="Ticker">
+<h3>📊 Tu posición actual</h3>
+
+<input id="ticker" placeholder="Ticker (ej: NVDA)">
 <input id="shares" type="number" placeholder="Acciones actuales">
 <input id="avg" type="number" placeholder="Precio promedio">
 <input id="price" type="number" placeholder="Precio actual">
+<input id="invest" type="number" placeholder="Dinero que quieres invertir">
 
-<button onclick="run()">Analizar escenarios</button>
+<button onclick="analyze()">Analizar decisión</button>
 
 <div id="out"></div>
 
@@ -110,89 +96,79 @@ th {
 
 <script>
 
-function evaluate(change, risk) {
-
-if (risk > 40) return "🔴 Demasiado riesgo";
-if (change > 5) return "🟢 Buena mejora";
-if (change > 1) return "🟡 Mejora leve";
-return "⚪ Impacto bajo";
-}
-
-function scenario(shares, avg, price, invest) {
-
-let newShares = invest / price;
-let totalShares = shares + newShares;
-
-let cost = shares * avg;
-let newCost = cost + invest;
-
-let newAvg = newCost / totalShares;
-
-let change = ((avg - newAvg) / avg) * 100;
-
-let exposure = (invest / (shares * price)) * 100;
-
-let evalText = evaluate(change, exposure);
-
-return {
-invest,
-newAvg,
-change,
-exposure,
-evalText
-};
-}
-
-function run() {
+function analyze() {
 
 let t = document.getElementById("ticker").value;
 let s = parseFloat(document.getElementById("shares").value);
 let avg = parseFloat(document.getElementById("avg").value);
 let price = parseFloat(document.getElementById("price").value);
+let invest = parseFloat(document.getElementById("invest").value);
 
-if (!t || !s || !avg || !price) return;
+if (!t || !s || !avg || !price || !invest) return;
 
-let s1 = scenario(s, avg, price, 1000);
-let s2 = scenario(s, avg, price, 3000);
-let s3 = scenario(s, avg, price, 7000);
+let currentPositionValue = s * price;
+
+// exposición nueva
+let exposure = (invest / currentPositionValue) * 100;
+
+// nuevo promedio
+let newShares = invest / price;
+let totalShares = s + newShares;
+let totalCost = (s * avg) + invest;
+let newAvg = totalCost / totalShares;
+
+// cambio en promedio
+let improvement = ((avg - newAvg) / avg) * 100;
+
+// riesgo de posición
+let positionSize = (currentPositionValue / (currentPositionValue + invest)) * 100;
+
+// clasificación de riesgo
+let risk = "";
+
+if (exposure > 50) risk = "🔴 Excesivo";
+else if (exposure > 25) risk = "🟠 Alto";
+else if (exposure > 10) risk = "🟡 Medio";
+else risk = "🟢 Bajo";
+
+// estado de posición
+let sizeStatus = "";
+
+if (positionSize > 70) sizeStatus = "🔴 Sobreconcentrada";
+else if (positionSize > 40) sizeStatus = "🟠 Concentrada";
+else if (positionSize > 20) sizeStatus = "🟡 Normal";
+else sizeStatus = "🟢 Pequeña";
+
+// veredicto final
+let verdict = "";
+
+if (risk === "🔴 Excesivo") {
+verdict = "🔴 NO deberías aumentar (riesgo demasiado alto)";
+}
+else if (risk === "🟠 Alto" && improvement < 2) {
+verdict = "🟡 Solo con alta convicción";
+}
+else if (improvement > 5 && risk !== "🔴 Excesivo") {
+verdict = "🟢 Tiene sentido aumentar la posición";
+}
+else {
+verdict = "🟡 Decisión opcional, sin ventaja clara";
+}
 
 document.getElementById("out").innerHTML = `
 <div class="result">
-<h3>📌 Escenarios para ${t}</h3>
 
-<table class="table">
-<tr>
-<th>Inversión</th>
-<th>Nueva media</th>
-<th>Mejora %</th>
-<th>Riesgo</th>
-<th>Evaluación</th>
-</tr>
+<h3>📌 Resultado para ${t}</h3>
 
-<tr>
-<td>$1,000</td>
-<td>${s1.newAvg.toFixed(2)}</td>
-<td class="green">${s1.change.toFixed(2)}%</td>
-<td>${s1.exposure.toFixed(2)}%</td>
-<td>${s1.evalText}</td>
-</tr>
+<p><b>Nueva media:</b> ${newAvg.toFixed(2)}</p>
+<p><b>Mejora del promedio:</b> <span class="green">${improvement.toFixed(2)}%</span></p>
 
-<tr>
-<td>$3,000</td>
-<td>${s2.newAvg.toFixed(2)}</td>
-<td class="green">${s2.change.toFixed(2)}%</td>
-<td>${s2.exposure.toFixed(2)}%</td>
-<td>${s2.evalText}</td>
-</tr>
+<p><b>Riesgo de la operación:</b> ${risk}</p>
+<p><b>Estado de posición:</b> ${sizeStatus}</p>
 
-<tr>
-<td>$7,000</td>
-<td>${s3.newAvg.toFixed(2)}</td>
-<td class="green">${s3.change.toFixed(2)}%</td>
-<td>${s3.exposure.toFixed(2)}%</td>
-<td>${s3.evalText}</td>
-</tr>
-</table>
+<hr>
+
+<p><b>VEREDICTO:</b> ${verdict}</p>
 
 </div>
 `;
