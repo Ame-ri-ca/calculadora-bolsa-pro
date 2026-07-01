@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portfolio Risk Engine Pro</title>
+<title>Portfolio Risk Engine Pro+</title>
 
 <style>
 body {
@@ -55,6 +55,17 @@ button {
     color: white;
     font-weight: bold;
     cursor: pointer;
+    margin-top: 5px;
+}
+
+.delete-btn {
+    background: #ef4444;
+    padding: 5px 8px;
+    font-size: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+    color: white;
 }
 
 table {
@@ -91,7 +102,7 @@ td {
 
 <body>
 
-<header>🧠 Portfolio Risk Engine Pro</header>
+<header>🧠 Portfolio Risk Engine Pro+</header>
 
 <div class="container">
 
@@ -113,6 +124,7 @@ td {
 <th>Valor</th>
 <th>Ganancia %</th>
 <th>Señal</th>
+<th>Acción</th>
 </tr>
 </thead>
 <tbody id="portfolio"></tbody>
@@ -121,12 +133,13 @@ td {
 
 <!-- ANALISIS -->
 <div class="card">
-<h3>💰 Evaluar nueva inversión</h3>
+<h3>💰 Evaluar nueva compra</h3>
 
-<input id="newTicker" placeholder="Ticker a evaluar">
+<input id="newTicker" placeholder="Ticker">
 <input id="newInvest" type="number" placeholder="Dinero a invertir">
+<input id="marketMove" type="number" placeholder="Cambio desde compra (%) ej: -20 o 30">
 
-<button onclick="analyze()">Analizar</button>
+<button onclick="analyze()">Analizar decisión</button>
 
 <div id="output"></div>
 </div>
@@ -151,19 +164,24 @@ portfolio.push({t, s, buy, price});
 render();
 }
 
+function remove(index) {
+portfolio.splice(index, 1);
+render();
+}
+
 function render() {
 
 let html = "";
 
-portfolio.forEach(a => {
+portfolio.forEach((a, i) => {
 
 let value = a.s * a.price;
 let profit = ((a.price - a.buy) / a.buy) * 100;
 
 let signal = "";
 
-if (profit <= -15) signal = "🟢 BUY (promediar)";
-else if (profit >= 20) signal = "🔴 SELL (posible toma de ganancias)";
+if (profit <= -15) signal = "🟢 BUY (acumular)";
+else if (profit >= 20) signal = "🔴 SELL (tomar ganancias)";
 else signal = "🟡 HOLD";
 
 html += `
@@ -172,6 +190,7 @@ html += `
 <td>$${value.toFixed(2)}</td>
 <td class="${profit >= 0 ? 'green' : 'red'}">${profit.toFixed(2)}%</td>
 <td>${signal}</td>
+<td><button class="delete-btn" onclick="remove(${i})">X</button></td>
 </tr>
 `;
 
@@ -185,27 +204,39 @@ function analyze() {
 
 let t = document.getElementById("newTicker").value;
 let invest = parseFloat(document.getElementById("newInvest").value);
+let move = parseFloat(document.getElementById("marketMove").value);
 
-if (!t || !invest) return;
+if (!t || !invest || isNaN(move)) return;
 
 let total = portfolio.reduce((acc, a) => acc + (a.s * a.price), 0);
 
 let weight = (invest / (total + invest)) * 100;
 
+// RIESGO
 let risk = "";
 
 if (weight > 30) risk = "🔴 Alta concentración";
 else if (weight > 15) risk = "🟡 Riesgo medio";
 else risk = "🟢 Riesgo controlado";
 
+// VALORACIÓN DE ENTRADA SEGÚN PRECIO
+let entry = "";
+
+if (move <= -15) entry = "🟢 Buena oportunidad (precio deprimido)";
+else if (move >= 30) entry = "🔴 Entrada cara (sobreextendido)";
+else entry = "🟡 Zona neutra";
+
+// DECISIÓN FINAL
 let decision = "";
 
 if (weight > 30) {
-decision = "❌ No recomendado (sobreconcentración)";
-} else if (weight < 10) {
-decision = "🟢 Buena adición al portafolio";
+decision = "❌ No recomendado (riesgo alto)";
+} else if (move <= -15 && weight < 20) {
+decision = "🟢 Buena entrada con riesgo controlado";
+} else if (move >= 30) {
+decision = "❌ Evitar compra (precio alto)";
 } else {
-decision = "🟡 Neutral, depende de convicción";
+decision = "🟡 Depende de convicción";
 }
 
 document.getElementById("output").innerHTML = `
@@ -215,7 +246,12 @@ document.getElementById("output").innerHTML = `
 
 <p><b>Peso en cartera:</b> ${weight.toFixed(2)}%</p>
 <p><b>Riesgo:</b> ${risk}</p>
-<p><b>Decisión:</b> ${decision}</p>
+
+<p><b>Precio relativo:</b> ${entry}</p>
+
+<hr>
+
+<p><b>VEREDICTO:</b> ${decision}</p>
 
 </div>
 `;
