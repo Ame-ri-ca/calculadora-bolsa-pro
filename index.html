@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bolsa PRO+ Impacto Real</title>
+<title>Investment Decision System</title>
 
 <style>
 body {
@@ -17,13 +17,13 @@ header {
     background: #0f172a;
     padding: 15px;
     text-align: center;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: bold;
     color: #38bdf8;
 }
 
 .container {
-    max-width: 1100px;
+    max-width: 900px;
     margin: auto;
     padding: 15px;
 }
@@ -49,139 +49,135 @@ input {
 button {
     width: 100%;
     padding: 10px;
-    border: none;
     border-radius: 6px;
+    border: none;
     background: #22c55e;
     color: white;
     font-weight: bold;
+    cursor: pointer;
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th {
+.result {
     background: #0f172a;
-    color: #38bdf8;
-    padding: 10px;
-}
-
-td {
-    text-align: center;
-    padding: 10px;
-    border-bottom: 1px solid #1f2937;
-}
-
-.pos { color: #22c55e; font-weight: bold; }
-.neg { color: #ef4444; font-weight: bold; }
-
-.box {
-    background: #111827;
-    padding: 10px;
+    padding: 12px;
     border-radius: 8px;
     margin-top: 10px;
     border: 1px solid #1f2937;
+}
+
+.green { color: #22c55e; font-weight: bold; }
+.yellow { color: #facc15; font-weight: bold; }
+.red { color: #ef4444; font-weight: bold; }
+
+.small {
+    font-size: 13px;
+    opacity: 0.85;
 }
 </style>
 </head>
 
 <body>
 
-<header>📊 Bolsa PRO+ Impacto Real</header>
+<header>🧠 Investment Decision System</header>
 
 <div class="container">
 
 <div class="card">
-<h3>➕ Agregar acción</h3>
+<h3>📊 Datos de tu posición</h3>
 
-<input id="ticker" placeholder="Ticker">
-<input id="cantidad" type="number" placeholder="Cantidad">
-<input id="precio" type="number" placeholder="Precio compra">
-<input id="actual" type="number" placeholder="Precio actual">
+<input id="ticker" placeholder="Ticker (ej: NVDA)">
+<input id="shares" type="number" placeholder="Acciones actuales">
+<input id="avg" type="number" placeholder="Precio promedio">
+<input id="price" type="number" placeholder="Precio actual">
+<input id="invest" type="number" placeholder="Cuánto quieres invertir ($)">
 
-<button onclick="agregar()">Agregar</button>
-</div>
+<button onclick="analyze()">Analizar decisión</button>
 
-<div class="card">
-<table>
-<thead>
-<tr>
-<th>Acción</th>
-<th>Posición</th>
-<th>P&L</th>
-<th>Impacto si compras +10%</th>
-<th>Decisión</th>
-</tr>
-</thead>
-<tbody id="tabla"></tbody>
-</table>
+<div id="output"></div>
 </div>
 
 </div>
 
 <script>
 
-let portfolio = [];
+function analyze() {
 
-function agregar() {
 let t = document.getElementById("ticker").value;
-let c = parseFloat(document.getElementById("cantidad").value);
-let p = parseFloat(document.getElementById("precio").value);
-let m = parseFloat(document.getElementById("actual").value);
+let s = parseFloat(document.getElementById("shares").value);
+let avg = parseFloat(document.getElementById("avg").value);
+let price = parseFloat(document.getElementById("price").value);
+let invest = parseFloat(document.getElementById("invest").value);
 
-if (!t || !c || !p || !m) return;
+if (!t || !s || !avg || !price || !invest) return;
 
-portfolio.push({t, c, p, m});
-render();
+let currentValue = s * price;
+let currentCost = s * avg;
+
+// nuevas acciones que podrías comprar
+let newShares = invest / price;
+
+// nueva posición
+let totalShares = s + newShares;
+let totalCost = currentCost + invest;
+let newAvg = totalCost / totalShares;
+
+// impacto en promedio
+let avgChange = ((avg - newAvg) / avg) * 100;
+
+// riesgo simple (exposición adicional)
+let exposure = invest / currentValue * 100;
+
+// lógica de decisión
+let riskSignal = "";
+
+if (exposure > 50) {
+riskSignal = "🔴 Riesgo alto: aumentas demasiado tu exposición";
+} else if (exposure > 20) {
+riskSignal = "🟡 Riesgo medio: impacto notable en tu portafolio";
+} else {
+riskSignal = "🟢 Riesgo controlado";
 }
 
-function decisionImpact(actualPLP, newPLP) {
+// evaluación de oportunidad (basado en tu regla -15% / +20%)
+let marketSignal = "";
 
-let diff = newPLP - actualPLP;
+let change = ((price - avg) / avg) * 100;
 
-if (diff > 2) return "🟢 Mejora tu posición (promediar ayuda)";
-if (diff > -2) return "🟡 Impacto neutro";
-return "🔴 Empeora tu promedio";
+if (change <= -15) {
+marketSignal = "🟢 Zona de oportunidad (caída fuerte - posible promediado)";
+} else if (change >= 20) {
+marketSignal = "🟠 Precio alto (posible toma de ganancias)";
+} else {
+marketSignal = "⚪ Zona neutral";
 }
 
-function render() {
+// decisión combinada
+let decision = "";
 
-let tabla = document.getElementById("tabla");
-tabla.innerHTML = "";
+if (exposure > 50) {
+decision = "❌ No recomendable (riesgo excesivo)";
+} else if (change <= -15 && exposure <= 20) {
+decision = "🟢 Buena oportunidad de entrada controlada";
+} else if (change >= 20) {
+decision = "🟠 Considerar reducir / esperar";
+} else {
+decision = "⚪ Mantener o decisión opcional";
+}
 
-portfolio.forEach(a => {
+document.getElementById("output").innerHTML = `
+<div class="result">
+<h3>📌 Resultado para ${t}</h3>
 
-let value = a.c * a.m;
-let cost = a.c * a.p;
+<p><b>Nueva media:</b> ${newAvg.toFixed(2)}</p>
+<p><b>Cambio en promedio:</b> <span class="green">${avgChange.toFixed(2)}%</span></p>
+<p><b>Exposición adicional:</b> <span class="yellow">${exposure.toFixed(2)}%</span></p>
 
-let pl = value - cost;
-let plp = (pl / cost) * 100;
+<p class="small">${riskSignal}</p>
+<p class="small">${marketSignal}</p>
 
-// simular compra +10%
-let newQty = a.c * 1.1;
-let newCost = (a.c * a.p) + (a.c * 0.1 * a.m);
-let newAvg = newCost / newQty;
-
-let newValue = newQty * a.m;
-let newPL = newValue - newCost;
-let newPLP = (newPL / newCost) * 100;
-
-let impact = decisionImpact(plp, newPLP);
-
-let cls = pl >= 0 ? "pos" : "neg";
-
-tabla.innerHTML += `
-<tr>
-<td>${a.t}</td>
-<td>${a.c}</td>
-<td class="${cls}">${plp.toFixed(2)}%</td>
-<td>${newPLP.toFixed(2)}%</td>
-<td>${impact}</td>
-</tr>
+<p><b>DECISIÓN:</b> ${decision}</p>
+</div>
 `;
-
-});
 
 }
 
