@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bolsa PRO+ Cerebro</title>
+<title>Bolsa PRO+ Decisiones</title>
 
 <style>
 body {
@@ -54,7 +54,6 @@ button {
     background: #22c55e;
     color: white;
     font-weight: bold;
-    cursor: pointer;
 }
 
 .summary {
@@ -92,7 +91,7 @@ td {
 .pos { color: #22c55e; font-weight: bold; }
 .neg { color: #ef4444; font-weight: bold; }
 
-.reco {
+.decision {
     margin-top: 10px;
     padding: 10px;
     border-radius: 8px;
@@ -104,7 +103,7 @@ td {
 
 <body>
 
-<header>🧠 Bolsa PRO+ Cerebro</header>
+<header>🧠 Bolsa PRO+ Decisiones</header>
 
 <div class="container">
 
@@ -127,6 +126,7 @@ td {
 
 <div class="card">
 <h3>📊 Portafolio</h3>
+
 <table>
 <thead>
 <tr>
@@ -134,17 +134,16 @@ td {
 <th>Cant</th>
 <th>Prom</th>
 <th>Actual</th>
-<th>P&L $</th>
 <th>P&L %</th>
-<th>Señal</th>
+<th>Decisión</th>
 </tr>
 </thead>
 <tbody id="tabla"></tbody>
 </table>
 
-<div class="reco">
-<h3>🧠 Recomendación</h3>
-<div id="reco">Agrega acciones para analizar</div>
+<div class="decision">
+<h3>🧠 Análisis del portafolio</h3>
+<div id="analisis">Agrega acciones para analizar</div>
 </div>
 
 </div>
@@ -167,10 +166,13 @@ portfolio.push({t, c, p, m});
 render();
 }
 
-function getSignal(plp) {
-if (plp <= -10) return "🔴 Evitar";
-if (plp <= -5) return "🟡 Vigilar";
-return "🟢 OK";
+// 🧠 lógica REALISTA
+function decision(plp) {
+if (plp <= -15) return "🔵 Acumular (promediar con cuidado)";
+if (plp <= -5) return "🟡 Zona de oportunidad";
+if (plp <= 5) return "⚪ Mantener";
+if (plp <= 15) return "🟠 Considerar tomar ganancias";
+return "🔴 Alto + riesgo de corrección";
 }
 
 function render() {
@@ -195,7 +197,7 @@ let plp = (pl / cost) * 100;
 totalValue += value;
 totalCost += cost;
 
-let signal = getSignal(plp);
+let dec = decision(plp);
 
 let cls = pl >= 0 ? "pos" : "neg";
 
@@ -208,9 +210,8 @@ tabla.innerHTML += `
 <td>${a.c}</td>
 <td>$${a.p.toFixed(2)}</td>
 <td>$${a.m.toFixed(2)}</td>
-<td class="${cls}">$${pl.toFixed(2)}</td>
 <td class="${cls}">${plp.toFixed(2)}%</td>
-<td>${signal}</td>
+<td>${dec}</td>
 </tr>
 `;
 
@@ -223,18 +224,15 @@ document.getElementById("total").innerText = "$" + totalValue.toFixed(2);
 document.getElementById("pl").innerText = "$" + totalPL.toFixed(2);
 document.getElementById("perc").innerText = totalPLP.toFixed(2) + "%";
 
-let recoText = "";
+let text = "";
 
 if (best && worst) {
-recoText += `🥇 Mejor: ${best.t} (${best.plp.toFixed(2)}%)<br>`;
-recoText += `⚠️ Más débil: ${worst.t} (${worst.plp.toFixed(2)}%)<br>`;
-
-if (worst.plp < -5) {
-recoText += `💡 Posible oportunidad de promediar en ${worst.t}`;
-}
+text += `🥇 Mejor posición: ${best.t} (${best.plp.toFixed(2)}%)<br>`;
+text += `⚠️ Más débil: ${worst.t} (${worst.plp.toFixed(2)}%)<br>`;
+text += `💡 Enfoque: prioriza mejorar posiciones en negativo fuerte antes de seguir comprando ganadoras.`;
 }
 
-document.getElementById("reco").innerHTML = recoText;
+document.getElementById("analisis").innerHTML = text;
 
 }
 
