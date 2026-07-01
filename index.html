@@ -3,95 +3,133 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bolsa PRO+</title>
+<title>Bolsa PRO+ Trading</title>
 
 <style>
 body {
-    font-family: Arial;
-    background: #0b1220;
-    color: white;
     margin: 0;
-    padding: 20px;
+    font-family: Arial, sans-serif;
+    background: #0a0f1c;
+    color: #e5e7eb;
 }
 
-.container {
-    max-width: 1000px;
-    margin: auto;
-}
-
-h1 {
+/* HEADER */
+header {
+    background: #0f172a;
+    padding: 15px;
     text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    color: #38bdf8;
+    border-bottom: 1px solid #1e293b;
 }
 
+/* GRID */
+.container {
+    max-width: 1100px;
+    margin: auto;
+    padding: 15px;
+}
+
+/* CARDS */
 .card {
-    background: #1e293b;
+    background: #111827;
     padding: 15px;
     border-radius: 10px;
     margin-bottom: 15px;
+    border: 1px solid #1f2937;
 }
 
+/* INPUTS */
 input {
     width: 100%;
-    padding: 8px;
-    margin: 5px 0;
+    padding: 10px;
+    margin: 6px 0;
     border-radius: 6px;
     border: none;
+    background: #1f2937;
+    color: white;
 }
 
+/* BUTTON */
 button {
+    width: 100%;
     padding: 10px;
     border: none;
     border-radius: 6px;
-    background: #3b82f6;
+    background: #22c55e;
     color: white;
+    font-weight: bold;
     cursor: pointer;
     margin-top: 10px;
 }
 
+button:hover {
+    background: #16a34a;
+}
+
+/* TABLE */
 table {
     width: 100%;
-    margin-top: 20px;
     border-collapse: collapse;
+    margin-top: 15px;
 }
 
-th, td {
+th {
+    background: #0f172a;
     padding: 10px;
-    border-bottom: 1px solid #334155;
-    text-align: center;
+    color: #38bdf8;
 }
 
+td {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #1f2937;
+}
+
+/* POSITIVO / NEGATIVO */
+.pos {
+    color: #22c55e;
+    font-weight: bold;
+}
+
+.neg {
+    color: #ef4444;
+    font-weight: bold;
+}
+
+/* SUMMARY */
 .summary {
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
     margin-bottom: 15px;
 }
 
 .box {
-    background: #1e293b;
-    padding: 10px;
+    background: #111827;
+    padding: 12px;
     border-radius: 8px;
-    flex: 1;
-    margin: 5px;
     text-align: center;
+    border: 1px solid #1f2937;
 }
 </style>
 </head>
 
 <body>
 
+<header>📊 Bolsa PRO+ Trading</header>
+
 <div class="container">
 
-<h1>📊 Bolsa PRO+</h1>
-
 <div class="summary">
-<div class="box">Valor total: <div id="total">$0</div></div>
-<div class="box">Ganancia/Pérdida: <div id="pl">$0</div></div>
-<div class="box">% Rendimiento: <div id="perc">0%</div></div>
+<div class="box">Valor Total<br><span id="total">$0</span></div>
+<div class="box">Ganancia/Pérdida<br><span id="pl">$0</span></div>
+<div class="box">Rendimiento<br><span id="perc">0%</span></div>
 </div>
 
 <div class="card">
-<h3>Agregar acción</h3>
+<h3>➕ Agregar Acción</h3>
 
 <input id="ticker" placeholder="Ticker (NVDA, TSLA...)">
 <input id="cantidad" placeholder="Cantidad" type="number">
@@ -101,12 +139,14 @@ th, td {
 <button onclick="agregar()">Agregar</button>
 </div>
 
+<div class="card">
+<h3>📋 Portafolio</h3>
 <table>
 <thead>
 <tr>
 <th>Acción</th>
-<th>Cant.</th>
-<th>Promedio</th>
+<th>Cant</th>
+<th>Prom</th>
 <th>Actual</th>
 <th>P&L $</th>
 <th>P&L %</th>
@@ -114,6 +154,7 @@ th, td {
 </thead>
 <tbody id="tabla"></tbody>
 </table>
+</div>
 
 </div>
 
@@ -153,14 +194,16 @@ let plp = (pl / cost) * 100;
 totalValue += value;
 totalCost += cost;
 
+let cls = pl >= 0 ? "pos" : "neg";
+
 tabla.innerHTML += `
 <tr>
 <td>${a.t}</td>
 <td>${a.c}</td>
 <td>$${a.p.toFixed(2)}</td>
 <td>$${a.m.toFixed(2)}</td>
-<td>$${pl.toFixed(2)}</td>
-<td>${plp.toFixed(2)}%</td>
+<td class="${cls}">$${pl.toFixed(2)}</td>
+<td class="${cls}">${plp.toFixed(2)}%</td>
 </tr>
 `;
 });
