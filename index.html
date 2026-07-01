@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bolsa PRO+ Alertas</title>
+<title>Bolsa PRO+ Cerebro</title>
 
 <style>
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    font-family: Arial;
     background: #0a0f1c;
     color: #e5e7eb;
 }
@@ -92,24 +92,19 @@ td {
 .pos { color: #22c55e; font-weight: bold; }
 .neg { color: #ef4444; font-weight: bold; }
 
-.alerts {
+.reco {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 8px;
     background: #0f172a;
     border: 1px solid #1f2937;
-    padding: 10px;
-    border-radius: 10px;
-    margin-bottom: 15px;
-}
-
-.alert-item {
-    padding: 5px;
-    border-bottom: 1px solid #1f2937;
 }
 </style>
 </head>
 
 <body>
 
-<header>📊 Bolsa PRO+ con Alertas</header>
+<header>🧠 Bolsa PRO+ Cerebro</header>
 
 <div class="container">
 
@@ -117,11 +112,6 @@ td {
 <div class="box">Valor Total<br><span id="total">$0</span></div>
 <div class="box">P&L<br><span id="pl">$0</span></div>
 <div class="box">Rendimiento<br><span id="perc">0%</span></div>
-</div>
-
-<div class="alerts">
-<h3>🔔 Alertas</h3>
-<div id="alertas">Sin alertas por ahora</div>
 </div>
 
 <div class="card">
@@ -136,6 +126,7 @@ td {
 </div>
 
 <div class="card">
+<h3>📊 Portafolio</h3>
 <table>
 <thead>
 <tr>
@@ -145,10 +136,17 @@ td {
 <th>Actual</th>
 <th>P&L $</th>
 <th>P&L %</th>
+<th>Señal</th>
 </tr>
 </thead>
 <tbody id="tabla"></tbody>
 </table>
+
+<div class="reco">
+<h3>🧠 Recomendación</h3>
+<div id="reco">Agrega acciones para analizar</div>
+</div>
+
 </div>
 
 </div>
@@ -169,18 +167,22 @@ portfolio.push({t, c, p, m});
 render();
 }
 
+function getSignal(plp) {
+if (plp <= -10) return "🔴 Evitar";
+if (plp <= -5) return "🟡 Vigilar";
+return "🟢 OK";
+}
+
 function render() {
 
 let tabla = document.getElementById("tabla");
-let alertBox = document.getElementById("alertas");
-
 tabla.innerHTML = "";
-alertBox.innerHTML = "";
 
 let totalValue = 0;
 let totalCost = 0;
 
-let alerts = [];
+let best = null;
+let worst = null;
 
 portfolio.forEach(a => {
 
@@ -193,7 +195,12 @@ let plp = (pl / cost) * 100;
 totalValue += value;
 totalCost += cost;
 
+let signal = getSignal(plp);
+
 let cls = pl >= 0 ? "pos" : "neg";
+
+if (!best || plp > best.plp) best = {t: a.t, plp};
+if (!worst || plp < worst.plp) worst = {t: a.t, plp};
 
 tabla.innerHTML += `
 <tr>
@@ -203,16 +210,9 @@ tabla.innerHTML += `
 <td>$${a.m.toFixed(2)}</td>
 <td class="${cls}">$${pl.toFixed(2)}</td>
 <td class="${cls}">${plp.toFixed(2)}%</td>
+<td>${signal}</td>
 </tr>
 `;
-
-if (plp <= -5) {
-alerts.push(`📉 ${a.t} cae ${plp.toFixed(2)}% (posible compra)`);
-}
-
-if (plp >= 10) {
-alerts.push(`📈 ${a.t} sube ${plp.toFixed(2)}% (fuerte movimiento)`);
-}
 
 });
 
@@ -223,11 +223,19 @@ document.getElementById("total").innerText = "$" + totalValue.toFixed(2);
 document.getElementById("pl").innerText = "$" + totalPL.toFixed(2);
 document.getElementById("perc").innerText = totalPLP.toFixed(2) + "%";
 
-if (alerts.length === 0) {
-alertBox.innerHTML = "Sin alertas por ahora";
-} else {
-alertBox.innerHTML = alerts.map(a => `<div class="alert-item">${a}</div>`).join("");
+let recoText = "";
+
+if (best && worst) {
+recoText += `🥇 Mejor: ${best.t} (${best.plp.toFixed(2)}%)<br>`;
+recoText += `⚠️ Más débil: ${worst.t} (${worst.plp.toFixed(2)}%)<br>`;
+
+if (worst.plp < -5) {
+recoText += `💡 Posible oportunidad de promediar en ${worst.t}`;
 }
+}
+
+document.getElementById("reco").innerHTML = recoText;
+
 }
 
 </script>
