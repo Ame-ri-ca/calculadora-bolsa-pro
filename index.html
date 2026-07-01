@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Investment Decision System</title>
+<title>Decision Matrix Pro</title>
 
 <style>
 body {
@@ -32,7 +32,6 @@ header {
     background: #111827;
     padding: 15px;
     border-radius: 10px;
-    margin-bottom: 15px;
     border: 1px solid #1f2937;
 }
 
@@ -58,124 +57,143 @@ button {
 }
 
 .result {
-    background: #0f172a;
+    margin-top: 15px;
     padding: 12px;
     border-radius: 8px;
-    margin-top: 10px;
+    background: #0f172a;
     border: 1px solid #1f2937;
+}
+
+.table {
+    width: 100%;
+    margin-top: 10px;
+    border-collapse: collapse;
+}
+
+td, th {
+    border-bottom: 1px solid #1f2937;
+    padding: 10px;
+    text-align: center;
+}
+
+th {
+    color: #38bdf8;
 }
 
 .green { color: #22c55e; font-weight: bold; }
 .yellow { color: #facc15; font-weight: bold; }
 .red { color: #ef4444; font-weight: bold; }
-
-.small {
-    font-size: 13px;
-    opacity: 0.85;
-}
 </style>
 </head>
 
 <body>
 
-<header>🧠 Investment Decision System</header>
+<header>🧠 Decision Matrix Pro</header>
 
 <div class="container">
 
 <div class="card">
 <h3>📊 Datos de tu posición</h3>
 
-<input id="ticker" placeholder="Ticker (ej: NVDA)">
+<input id="ticker" placeholder="Ticker">
 <input id="shares" type="number" placeholder="Acciones actuales">
 <input id="avg" type="number" placeholder="Precio promedio">
 <input id="price" type="number" placeholder="Precio actual">
-<input id="invest" type="number" placeholder="Cuánto quieres invertir ($)">
 
-<button onclick="analyze()">Analizar decisión</button>
+<button onclick="run()">Analizar escenarios</button>
 
-<div id="output"></div>
+<div id="out"></div>
+
 </div>
 
 </div>
 
 <script>
 
-function analyze() {
+function evaluate(change, risk) {
+
+if (risk > 40) return "🔴 Demasiado riesgo";
+if (change > 5) return "🟢 Buena mejora";
+if (change > 1) return "🟡 Mejora leve";
+return "⚪ Impacto bajo";
+}
+
+function scenario(shares, avg, price, invest) {
+
+let newShares = invest / price;
+let totalShares = shares + newShares;
+
+let cost = shares * avg;
+let newCost = cost + invest;
+
+let newAvg = newCost / totalShares;
+
+let change = ((avg - newAvg) / avg) * 100;
+
+let exposure = (invest / (shares * price)) * 100;
+
+let evalText = evaluate(change, exposure);
+
+return {
+invest,
+newAvg,
+change,
+exposure,
+evalText
+};
+}
+
+function run() {
 
 let t = document.getElementById("ticker").value;
 let s = parseFloat(document.getElementById("shares").value);
 let avg = parseFloat(document.getElementById("avg").value);
 let price = parseFloat(document.getElementById("price").value);
-let invest = parseFloat(document.getElementById("invest").value);
 
-if (!t || !s || !avg || !price || !invest) return;
+if (!t || !s || !avg || !price) return;
 
-let currentValue = s * price;
-let currentCost = s * avg;
+let s1 = scenario(s, avg, price, 1000);
+let s2 = scenario(s, avg, price, 3000);
+let s3 = scenario(s, avg, price, 7000);
 
-// nuevas acciones que podrías comprar
-let newShares = invest / price;
-
-// nueva posición
-let totalShares = s + newShares;
-let totalCost = currentCost + invest;
-let newAvg = totalCost / totalShares;
-
-// impacto en promedio
-let avgChange = ((avg - newAvg) / avg) * 100;
-
-// riesgo simple (exposición adicional)
-let exposure = invest / currentValue * 100;
-
-// lógica de decisión
-let riskSignal = "";
-
-if (exposure > 50) {
-riskSignal = "🔴 Riesgo alto: aumentas demasiado tu exposición";
-} else if (exposure > 20) {
-riskSignal = "🟡 Riesgo medio: impacto notable en tu portafolio";
-} else {
-riskSignal = "🟢 Riesgo controlado";
-}
-
-// evaluación de oportunidad (basado en tu regla -15% / +20%)
-let marketSignal = "";
-
-let change = ((price - avg) / avg) * 100;
-
-if (change <= -15) {
-marketSignal = "🟢 Zona de oportunidad (caída fuerte - posible promediado)";
-} else if (change >= 20) {
-marketSignal = "🟠 Precio alto (posible toma de ganancias)";
-} else {
-marketSignal = "⚪ Zona neutral";
-}
-
-// decisión combinada
-let decision = "";
-
-if (exposure > 50) {
-decision = "❌ No recomendable (riesgo excesivo)";
-} else if (change <= -15 && exposure <= 20) {
-decision = "🟢 Buena oportunidad de entrada controlada";
-} else if (change >= 20) {
-decision = "🟠 Considerar reducir / esperar";
-} else {
-decision = "⚪ Mantener o decisión opcional";
-}
-
-document.getElementById("output").innerHTML = `
+document.getElementById("out").innerHTML = `
 <div class="result">
-<h3>📌 Resultado para ${t}</h3>
+<h3>📌 Escenarios para ${t}</h3>
 
-<p><b>Nueva media:</b> ${newAvg.toFixed(2)}</p>
-<p><b>Cambio en promedio:</b> <span class="green">${avgChange.toFixed(2)}%</span></p>
-<p><b>Exposición adicional:</b> <span class="yellow">${exposure.toFixed(2)}%</span></p>
+<table class="table">
+<tr>
+<th>Inversión</th>
+<th>Nueva media</th>
+<th>Mejora %</th>
+<th>Riesgo</th>
+<th>Evaluación</th>
+</tr>
 
-<p class="small">${riskSignal}</p>
-<p class="small">${marketSignal}</p>
+<tr>
+<td>$1,000</td>
+<td>${s1.newAvg.toFixed(2)}</td>
+<td class="green">${s1.change.toFixed(2)}%</td>
+<td>${s1.exposure.toFixed(2)}%</td>
+<td>${s1.evalText}</td>
+</tr>
 
-<p><b>DECISIÓN:</b> ${decision}</p>
+<tr>
+<td>$3,000</td>
+<td>${s2.newAvg.toFixed(2)}</td>
+<td class="green">${s2.change.toFixed(2)}%</td>
+<td>${s2.exposure.toFixed(2)}%</td>
+<td>${s2.evalText}</td>
+</tr>
+
+<tr>
+<td>$7,000</td>
+<td>${s3.newAvg.toFixed(2)}</td>
+<td class="green">${s3.change.toFixed(2)}%</td>
+<td>${s3.exposure.toFixed(2)}%</td>
+<td>${s3.evalText}</td>
+</tr>
+</table>
+
 </div>
 `;
 
