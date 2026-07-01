@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Investment Decision Filter</title>
+<title>Portfolio Risk Engine</title>
 
 <style>
 body {
@@ -33,6 +33,7 @@ header {
     padding: 15px;
     border-radius: 10px;
     border: 1px solid #1f2937;
+    margin-bottom: 15px;
 }
 
 input {
@@ -56,6 +57,24 @@ button {
     cursor: pointer;
 }
 
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th {
+    color: #38bdf8;
+    border-bottom: 1px solid #1f2937;
+    padding: 10px;
+}
+
+td {
+    text-align: center;
+    padding: 10px;
+    border-bottom: 1px solid #1f2937;
+}
+
 .result {
     margin-top: 15px;
     padding: 12px;
@@ -72,103 +91,139 @@ button {
 
 <body>
 
-<header>🧠 Investment Decision Filter</header>
+<header>🧠 Portfolio Risk Engine v1</header>
 
 <div class="container">
 
+<!-- PORTFOLIO -->
 <div class="card">
-
-<h3>📊 Tu posición actual</h3>
+<h3>📦 Añadir posición a cartera</h3>
 
 <input id="ticker" placeholder="Ticker (ej: NVDA)">
-<input id="shares" type="number" placeholder="Acciones actuales">
-<input id="avg" type="number" placeholder="Precio promedio">
+<input id="shares" type="number" placeholder="Cantidad de acciones">
 <input id="price" type="number" placeholder="Precio actual">
-<input id="invest" type="number" placeholder="Dinero que quieres invertir">
 
-<button onclick="analyze()">Analizar decisión</button>
+<button onclick="add()">Agregar a cartera</button>
 
-<div id="out"></div>
+<table>
+<thead>
+<tr>
+<th>Acción</th>
+<th>Valor</th>
+<th>% Cartera</th>
+</tr>
+</thead>
+<tbody id="portfolio"></tbody>
+</table>
+</div>
 
+<!-- NUEVA COMPRA -->
+<div class="card">
+<h3>💰 Evaluar nueva compra</h3>
+
+<input id="newTicker" placeholder="Ticker a evaluar">
+<input id="newInvest" type="number" placeholder="Dinero a invertir">
+
+<button onclick="analyze()">Analizar impacto</button>
+
+<div id="output"></div>
 </div>
 
 </div>
 
 <script>
 
-function analyze() {
+let portfolio = [];
+
+function add() {
 
 let t = document.getElementById("ticker").value;
 let s = parseFloat(document.getElementById("shares").value);
-let avg = parseFloat(document.getElementById("avg").value);
-let price = parseFloat(document.getElementById("price").value);
-let invest = parseFloat(document.getElementById("invest").value);
+let p = parseFloat(document.getElementById("price").value);
 
-if (!t || !s || !avg || !price || !invest) return;
+if (!t || !s || !p) return;
 
-let currentPositionValue = s * price;
+portfolio.push({t, s, p});
 
-// exposición nueva
-let exposure = (invest / currentPositionValue) * 100;
+render();
+}
 
-// nuevo promedio
-let newShares = invest / price;
-let totalShares = s + newShares;
-let totalCost = (s * avg) + invest;
-let newAvg = totalCost / totalShares;
+function render() {
 
-// cambio en promedio
-let improvement = ((avg - newAvg) / avg) * 100;
+let total = portfolio.reduce((acc, a) => acc + (a.s * a.p), 0);
 
-// riesgo de posición
-let positionSize = (currentPositionValue / (currentPositionValue + invest)) * 100;
+let html = "";
 
-// clasificación de riesgo
+portfolio.forEach(a => {
+let value = a.s * a.p;
+let percent = (value / total) * 100;
+
+html += `
+<tr>
+<td>${a.t}</td>
+<td>$${value.toFixed(2)}</td>
+<td>${percent.toFixed(2)}%</td>
+</tr>
+`;
+});
+
+document.getElementById("portfolio").innerHTML = html;
+
+}
+
+function analyze() {
+
+let t = document.getElementById("newTicker").value;
+let invest = parseFloat(document.getElementById("newInvest").value);
+
+if (!t || !invest || portfolio.length === 0) return;
+
+let total = portfolio.reduce((acc, a) => acc + (a.s * a.p), 0);
+
+// nueva exposición estimada
+let newTotal = total + invest;
+
+let newWeight = (invest / newTotal) * 100;
+
+// concentración actual (mayor posición)
+let maxWeight = 0;
+
+portfolio.forEach(a => {
+let w = (a.s * a.p) / total * 100;
+if (w > maxWeight) maxWeight = w;
+});
+
+// impacto en riesgo
 let risk = "";
 
-if (exposure > 50) risk = "🔴 Excesivo";
-else if (exposure > 25) risk = "🟠 Alto";
-else if (exposure > 10) risk = "🟡 Medio";
-else risk = "🟢 Bajo";
+if (newWeight > 30) {
+risk = "🔴 Aumenta demasiado el riesgo (sobreconcentración)";
+} else if (newWeight > 15) {
+risk = "🟡 Impacto medio en cartera";
+} else {
+risk = "🟢 Riesgo controlado";
+}
 
-// estado de posición
-let sizeStatus = "";
-
-if (positionSize > 70) sizeStatus = "🔴 Sobreconcentrada";
-else if (positionSize > 40) sizeStatus = "🟠 Concentrada";
-else if (positionSize > 20) sizeStatus = "🟡 Normal";
-else sizeStatus = "🟢 Pequeña";
-
-// veredicto final
+// veredicto
 let verdict = "";
 
-if (risk === "🔴 Excesivo") {
-verdict = "🔴 NO deberías aumentar (riesgo demasiado alto)";
-}
-else if (risk === "🟠 Alto" && improvement < 2) {
-verdict = "🟡 Solo con alta convicción";
-}
-else if (improvement > 5 && risk !== "🔴 Excesivo") {
-verdict = "🟢 Tiene sentido aumentar la posición";
-}
-else {
-verdict = "🟡 Decisión opcional, sin ventaja clara";
+if (maxWeight > 40) {
+verdict = "🔴 Ya estás concentrado → no es recomendable aumentar";
+} else if (newWeight < 10) {
+verdict = "🟢 Buena adición a la diversificación";
+} else {
+verdict = "🟡 Decisión neutral, depende de convicción";
 }
 
-document.getElementById("out").innerHTML = `
+document.getElementById("output").innerHTML = `
 <div class="result">
 
 <h3>📌 Resultado para ${t}</h3>
 
-<p><b>Nueva media:</b> ${newAvg.toFixed(2)}</p>
-<p><b>Mejora del promedio:</b> <span class="green">${improvement.toFixed(2)}%</span></p>
+<p><b>Nuevo peso en cartera:</b> ${newWeight.toFixed(2)}%</p>
 
-<p><b>Riesgo de la operación:</b> ${risk}</p>
-<p><b>Estado de posición:</b> ${sizeStatus}</p>
-
-<hr>
-
-<p><b>VEREDICTO:</b> ${verdict}</p>
+<p><b>Riesgo:</b> ${risk}</p>
+<p><b>Veredicto:</b> ${verdict}</p>
 
 </div>
 `;
