@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora Bolsa PRO</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #0b1220;
+    color: white;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+}
+
+h1 {
+    text-align: center;
+}
+
+.card {
+    background: #1e293b;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+input {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 6px;
+    border: none;
+}
+
+button {
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    background: #3b82f6;
+    color: white;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #334155;
+    text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>📊 Bolsa PRO - Portafolio</h1>
+
+<div class="card">
+<h3>Agregar acción</h3>
+
+<input id="ticker" placeholder="Ticker (NVDA, TSLA...)">
+<input id="cantidad" placeholder="Cantidad de acciones" type="number">
+<input id="precio" placeholder="Precio promedio compra" type="number">
+<input id="actual" placeholder="Precio actual" type="number">
+
+<button onclick="agregar()">Agregar</button>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Acción</th>
+<th>Cantidad</th>
+<th>Promedio</th>
+<th>Actual</th>
+<th>P&L %</th>
+</tr>
+</thead>
+<tbody id="tabla"></tbody>
+</table>
+
+</div>
+
+<script>
+
+let portafolio = [];
+
+function agregar() {
+
+let t = document.getElementById("ticker").value;
+let c = parseFloat(document.getElementById("cantidad").value);
+let p = parseFloat(document.getElementById("precio").value);
+let m = parseFloat(document.getElementById("actual").value);
+
+if (!t || !c || !p || !m) {
+alert("Completa todos los campos");
+return;
+}
+
+portafolio.push({t, c, p, m});
+render();
+}
+
+function render() {
+
+let tabla = document.getElementById("tabla");
+tabla.innerHTML = "";
+
+portafolio.forEach(a => {
+
+let pnl = ((a.m - a.p) / a.p) * 100;
+
+tabla.innerHTML += `
+<tr>
+<td>${a.t}</td>
+<td>${a.c}</td>
+<td>$${a.p.toFixed(2)}</td>
+<td>$${a.m.toFixed(2)}</td>
+<td>${pnl.toFixed(2)}%</td>
+</tr>
+`;
+});
+
+}
+
+</script>
+
+</body>
+</html>
