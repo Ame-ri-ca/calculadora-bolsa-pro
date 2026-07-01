@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portfolio Risk Engine</title>
+<title>Portfolio Risk Engine Pro</title>
 
 <style>
 body {
@@ -91,40 +91,42 @@ td {
 
 <body>
 
-<header>🧠 Portfolio Risk Engine v1</header>
+<header>🧠 Portfolio Risk Engine Pro</header>
 
 <div class="container">
 
-<!-- PORTFOLIO -->
+<!-- CARTERA -->
 <div class="card">
-<h3>📦 Añadir posición a cartera</h3>
+<h3>📦 Añadir posición</h3>
 
-<input id="ticker" placeholder="Ticker (ej: NVDA)">
-<input id="shares" type="number" placeholder="Cantidad de acciones">
+<input id="ticker" placeholder="Ticker">
+<input id="shares" type="number" placeholder="Acciones">
+<input id="buy" type="number" placeholder="Precio de compra">
 <input id="price" type="number" placeholder="Precio actual">
 
-<button onclick="add()">Agregar a cartera</button>
+<button onclick="add()">Agregar</button>
 
 <table>
 <thead>
 <tr>
 <th>Acción</th>
 <th>Valor</th>
-<th>% Cartera</th>
+<th>Ganancia %</th>
+<th>Señal</th>
 </tr>
 </thead>
 <tbody id="portfolio"></tbody>
 </table>
 </div>
 
-<!-- NUEVA COMPRA -->
+<!-- ANALISIS -->
 <div class="card">
-<h3>💰 Evaluar nueva compra</h3>
+<h3>💰 Evaluar nueva inversión</h3>
 
 <input id="newTicker" placeholder="Ticker a evaluar">
 <input id="newInvest" type="number" placeholder="Dinero a invertir">
 
-<button onclick="analyze()">Analizar impacto</button>
+<button onclick="analyze()">Analizar</button>
 
 <div id="output"></div>
 </div>
@@ -139,32 +141,40 @@ function add() {
 
 let t = document.getElementById("ticker").value;
 let s = parseFloat(document.getElementById("shares").value);
-let p = parseFloat(document.getElementById("price").value);
+let buy = parseFloat(document.getElementById("buy").value);
+let price = parseFloat(document.getElementById("price").value);
 
-if (!t || !s || !p) return;
+if (!t || !s || !buy || !price) return;
 
-portfolio.push({t, s, p});
+portfolio.push({t, s, buy, price});
 
 render();
 }
 
 function render() {
 
-let total = portfolio.reduce((acc, a) => acc + (a.s * a.p), 0);
-
 let html = "";
 
 portfolio.forEach(a => {
-let value = a.s * a.p;
-let percent = (value / total) * 100;
+
+let value = a.s * a.price;
+let profit = ((a.price - a.buy) / a.buy) * 100;
+
+let signal = "";
+
+if (profit <= -15) signal = "🟢 BUY (promediar)";
+else if (profit >= 20) signal = "🔴 SELL (posible toma de ganancias)";
+else signal = "🟡 HOLD";
 
 html += `
 <tr>
 <td>${a.t}</td>
 <td>$${value.toFixed(2)}</td>
-<td>${percent.toFixed(2)}%</td>
+<td class="${profit >= 0 ? 'green' : 'red'}">${profit.toFixed(2)}%</td>
+<td>${signal}</td>
 </tr>
 `;
+
 });
 
 document.getElementById("portfolio").innerHTML = html;
@@ -176,54 +186,36 @@ function analyze() {
 let t = document.getElementById("newTicker").value;
 let invest = parseFloat(document.getElementById("newInvest").value);
 
-if (!t || !invest || portfolio.length === 0) return;
+if (!t || !invest) return;
 
-let total = portfolio.reduce((acc, a) => acc + (a.s * a.p), 0);
+let total = portfolio.reduce((acc, a) => acc + (a.s * a.price), 0);
 
-// nueva exposición estimada
-let newTotal = total + invest;
+let weight = (invest / (total + invest)) * 100;
 
-let newWeight = (invest / newTotal) * 100;
-
-// concentración actual (mayor posición)
-let maxWeight = 0;
-
-portfolio.forEach(a => {
-let w = (a.s * a.p) / total * 100;
-if (w > maxWeight) maxWeight = w;
-});
-
-// impacto en riesgo
 let risk = "";
 
-if (newWeight > 30) {
-risk = "🔴 Aumenta demasiado el riesgo (sobreconcentración)";
-} else if (newWeight > 15) {
-risk = "🟡 Impacto medio en cartera";
-} else {
-risk = "🟢 Riesgo controlado";
-}
+if (weight > 30) risk = "🔴 Alta concentración";
+else if (weight > 15) risk = "🟡 Riesgo medio";
+else risk = "🟢 Riesgo controlado";
 
-// veredicto
-let verdict = "";
+let decision = "";
 
-if (maxWeight > 40) {
-verdict = "🔴 Ya estás concentrado → no es recomendable aumentar";
-} else if (newWeight < 10) {
-verdict = "🟢 Buena adición a la diversificación";
+if (weight > 30) {
+decision = "❌ No recomendado (sobreconcentración)";
+} else if (weight < 10) {
+decision = "🟢 Buena adición al portafolio";
 } else {
-verdict = "🟡 Decisión neutral, depende de convicción";
+decision = "🟡 Neutral, depende de convicción";
 }
 
 document.getElementById("output").innerHTML = `
 <div class="result">
 
-<h3>📌 Resultado para ${t}</h3>
+<h3>📌 ${t}</h3>
 
-<p><b>Nuevo peso en cartera:</b> ${newWeight.toFixed(2)}%</p>
-
+<p><b>Peso en cartera:</b> ${weight.toFixed(2)}%</p>
 <p><b>Riesgo:</b> ${risk}</p>
-<p><b>Veredicto:</b> ${verdict}</p>
+<p><b>Decisión:</b> ${decision}</p>
 
 </div>
 `;
