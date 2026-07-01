@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bolsa PRO+ Trading</title>
+<title>Bolsa PRO+ Alertas</title>
 
 <style>
 body {
@@ -13,7 +13,6 @@ body {
     color: #e5e7eb;
 }
 
-/* HEADER */
 header {
     background: #0f172a;
     padding: 15px;
@@ -21,17 +20,14 @@ header {
     font-size: 22px;
     font-weight: bold;
     color: #38bdf8;
-    border-bottom: 1px solid #1e293b;
 }
 
-/* GRID */
 .container {
     max-width: 1100px;
     margin: auto;
     padding: 15px;
 }
 
-/* CARDS */
 .card {
     background: #111827;
     padding: 15px;
@@ -40,7 +36,6 @@ header {
     border: 1px solid #1f2937;
 }
 
-/* INPUTS */
 input {
     width: 100%;
     padding: 10px;
@@ -51,7 +46,6 @@ input {
     color: white;
 }
 
-/* BUTTON */
 button {
     width: 100%;
     padding: 10px;
@@ -61,44 +55,8 @@ button {
     color: white;
     font-weight: bold;
     cursor: pointer;
-    margin-top: 10px;
 }
 
-button:hover {
-    background: #16a34a;
-}
-
-/* TABLE */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-
-th {
-    background: #0f172a;
-    padding: 10px;
-    color: #38bdf8;
-}
-
-td {
-    padding: 10px;
-    text-align: center;
-    border-bottom: 1px solid #1f2937;
-}
-
-/* POSITIVO / NEGATIVO */
-.pos {
-    color: #22c55e;
-    font-weight: bold;
-}
-
-.neg {
-    color: #ef4444;
-    font-weight: bold;
-}
-
-/* SUMMARY */
 .summary {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -113,34 +71,71 @@ td {
     text-align: center;
     border: 1px solid #1f2937;
 }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background: #0f172a;
+    color: #38bdf8;
+    padding: 10px;
+}
+
+td {
+    text-align: center;
+    padding: 10px;
+    border-bottom: 1px solid #1f2937;
+}
+
+.pos { color: #22c55e; font-weight: bold; }
+.neg { color: #ef4444; font-weight: bold; }
+
+.alerts {
+    background: #0f172a;
+    border: 1px solid #1f2937;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.alert-item {
+    padding: 5px;
+    border-bottom: 1px solid #1f2937;
+}
 </style>
 </head>
 
 <body>
 
-<header>📊 Bolsa PRO+ Trading</header>
+<header>📊 Bolsa PRO+ con Alertas</header>
 
 <div class="container">
 
 <div class="summary">
 <div class="box">Valor Total<br><span id="total">$0</span></div>
-<div class="box">Ganancia/Pérdida<br><span id="pl">$0</span></div>
+<div class="box">P&L<br><span id="pl">$0</span></div>
 <div class="box">Rendimiento<br><span id="perc">0%</span></div>
 </div>
 
-<div class="card">
-<h3>➕ Agregar Acción</h3>
+<div class="alerts">
+<h3>🔔 Alertas</h3>
+<div id="alertas">Sin alertas por ahora</div>
+</div>
 
-<input id="ticker" placeholder="Ticker (NVDA, TSLA...)">
-<input id="cantidad" placeholder="Cantidad" type="number">
-<input id="precio" placeholder="Precio promedio compra" type="number">
-<input id="actual" placeholder="Precio actual" type="number">
+<div class="card">
+<h3>➕ Agregar acción</h3>
+
+<input id="ticker" placeholder="Ticker">
+<input id="cantidad" type="number" placeholder="Cantidad">
+<input id="precio" type="number" placeholder="Precio compra">
+<input id="actual" type="number" placeholder="Precio actual">
 
 <button onclick="agregar()">Agregar</button>
 </div>
 
 <div class="card">
-<h3>📋 Portafolio</h3>
 <table>
 <thead>
 <tr>
@@ -163,7 +158,6 @@ td {
 let portfolio = [];
 
 function agregar() {
-
 let t = document.getElementById("ticker").value;
 let c = parseFloat(document.getElementById("cantidad").value);
 let p = parseFloat(document.getElementById("precio").value);
@@ -178,10 +172,15 @@ render();
 function render() {
 
 let tabla = document.getElementById("tabla");
+let alertBox = document.getElementById("alertas");
+
 tabla.innerHTML = "";
+alertBox.innerHTML = "";
 
 let totalValue = 0;
 let totalCost = 0;
+
+let alerts = [];
 
 portfolio.forEach(a => {
 
@@ -206,6 +205,15 @@ tabla.innerHTML += `
 <td class="${cls}">${plp.toFixed(2)}%</td>
 </tr>
 `;
+
+if (plp <= -5) {
+alerts.push(`📉 ${a.t} cae ${plp.toFixed(2)}% (posible compra)`);
+}
+
+if (plp >= 10) {
+alerts.push(`📈 ${a.t} sube ${plp.toFixed(2)}% (fuerte movimiento)`);
+}
+
 });
 
 let totalPL = totalValue - totalCost;
@@ -214,6 +222,12 @@ let totalPLP = (totalPL / totalCost) * 100;
 document.getElementById("total").innerText = "$" + totalValue.toFixed(2);
 document.getElementById("pl").innerText = "$" + totalPL.toFixed(2);
 document.getElementById("perc").innerText = totalPLP.toFixed(2) + "%";
+
+if (alerts.length === 0) {
+alertBox.innerHTML = "Sin alertas por ahora";
+} else {
+alertBox.innerHTML = alerts.map(a => `<div class="alert-item">${a}</div>`).join("");
+}
 }
 
 </script>
