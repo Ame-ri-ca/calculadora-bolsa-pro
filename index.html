@@ -2,20 +2,28 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Alfredo AI Investor</title>
+
+<meta name="apple-mobile-web-app-title" content="Alfredo AI Investor">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0f1c">
 
 <style>
 body {
     margin: 0;
     font-family: Arial;
     background: #0a0f1c;
-    color: white;
+    color: #e5e7eb;
 }
 
 header {
-    padding: 15px;
     background: #0f172a;
+    padding: 15px;
     text-align: center;
+    font-size: 20px;
     font-weight: bold;
     color: #38bdf8;
 }
@@ -30,6 +38,7 @@ header {
     background: #111827;
     padding: 15px;
     border-radius: 10px;
+    border: 1px solid #1f2937;
     margin-bottom: 15px;
 }
 
@@ -37,32 +46,61 @@ input {
     width: 100%;
     padding: 10px;
     margin: 6px 0;
-    background: #1f2937;
-    border: none;
-    color: white;
     border-radius: 6px;
+    border: none;
+    background: #1f2937;
+    color: white;
 }
 
 button {
     width: 100%;
     padding: 10px;
-    background: #22c55e;
+    border-radius: 6px;
     border: none;
+    background: #22c55e;
     color: white;
     font-weight: bold;
+    cursor: pointer;
+}
+
+.delete-btn {
+    background: #ef4444;
+    border: none;
+    padding: 4px 8px;
+    color: white;
     border-radius: 6px;
     cursor: pointer;
 }
 
-.green { color: #22c55e; }
-.red { color: #ef4444; }
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th {
+    color: #38bdf8;
+    border-bottom: 1px solid #1f2937;
+    padding: 10px;
+}
+
+td {
+    text-align: center;
+    padding: 10px;
+    border-bottom: 1px solid #1f2937;
+}
 
 .result {
-    margin-top: 10px;
-    padding: 10px;
-    background: #0f172a;
+    margin-top: 15px;
+    padding: 12px;
     border-radius: 8px;
+    background: #0f172a;
+    border: 1px solid #1f2937;
 }
+
+.green { color: #22c55e; font-weight: bold; }
+.yellow { color: #facc15; font-weight: bold; }
+.red { color: #ef4444; font-weight: bold; }
 </style>
 </head>
 
@@ -72,17 +110,41 @@ button {
 
 <div class="container">
 
+<!-- CARTERA -->
 <div class="card">
-<h3>📊 Portafolio</h3>
+<h3>📦 Portafolio</h3>
 
 <input id="ticker" placeholder="Ticker">
 <input id="shares" type="number" placeholder="Acciones">
-<input id="buy" type="number" placeholder="Precio compra">
+<input id="buy" type="number" placeholder="Precio de compra">
 <input id="price" type="number" placeholder="Precio actual">
 
 <button onclick="add()">Agregar</button>
 
-<div id="list"></div>
+<table>
+<thead>
+<tr>
+<th>Acción</th>
+<th>Valor</th>
+<th>Resultado</th>
+<th>Señal</th>
+<th></th>
+</tr>
+</thead>
+<tbody id="portfolio"></tbody>
+</table>
+</div>
+
+<!-- DECISION -->
+<div class="card">
+<h3>💰 Evaluar nueva compra</h3>
+
+<input id="newTicker" placeholder="Ticker">
+<input id="newInvest" type="number" placeholder="Monto a invertir">
+
+<button onclick="analyze()">Analizar decisión</button>
+
+<div id="output"></div>
 </div>
 
 </div>
@@ -95,12 +157,18 @@ function add() {
 
 let t = document.getElementById("ticker").value;
 let s = parseFloat(document.getElementById("shares").value);
-let b = parseFloat(document.getElementById("buy").value);
-let p = parseFloat(document.getElementById("price").value);
+let buy = parseFloat(document.getElementById("buy").value);
+let price = parseFloat(document.getElementById("price").value);
 
-if (!t || !s || !b || !p) return;
+if (!t || !s || !buy || !price) return;
 
-portfolio.push({t, s, b, p});
+portfolio.push({t, s, buy, price});
+
+render();
+}
+
+function remove(index) {
+portfolio.splice(index, 1);
 render();
 }
 
@@ -108,26 +176,78 @@ function render() {
 
 let html = "";
 
-portfolio.forEach(a => {
+portfolio.forEach((a, i) => {
 
-let invested = a.s * a.b;
-let current = a.s * a.p;
-let diff = current - invested;
-let pct = (diff / invested) * 100;
+let value = a.s * a.price;
+let result = ((a.price - a.buy) / a.buy) * 100;
 
-let color = diff >= 0 ? "green" : "red";
+let signal = "";
+
+if (result <= -15) signal = "🟢 Acumular";
+else if (result >= 20) signal = "🔴 Reducir";
+else signal = "🟡 Mantener";
 
 html += `
-<div class="result">
-<p><b>${a.t}</b></p>
-<p>Invertido: $${invested.toFixed(2)}</p>
-<p>Actual: $${current.toFixed(2)}</p>
-<p class="${color}">Ganancia/Pérdida: $${diff.toFixed(2)} (${pct.toFixed(2)}%)</p>
-</div>
+<tr>
+<td>${a.t}</td>
+<td>$${value.toFixed(2)}</td>
+<td class="${result >= 0 ? 'green' : 'red'}">${result.toFixed(2)}%</td>
+<td>${signal}</td>
+<td><button class="delete-btn" onclick="remove(${i})">X</button></td>
+</tr>
 `;
+
 });
 
-document.getElementById("list").innerHTML = html;
+document.getElementById("portfolio").innerHTML = html;
+
+}
+
+function analyze() {
+
+let t = document.getElementById("newTicker").value;
+let invest = parseFloat(document.getElementById("newInvest").value);
+
+if (!t || !invest) return;
+
+// total cartera
+let totalValue = portfolio.reduce((acc, a) => acc + (a.s * a.price), 0);
+
+// riesgo
+let weight = (invest / (totalValue + invest)) * 100;
+
+// promedio de compra
+let avgBuy = portfolio.length > 0
+? portfolio.reduce((a,b)=>a+b.buy,0)/portfolio.length
+: 0;
+
+// evaluación real del precio
+let priceDiff = avgBuy ? ((avgBuy - avgBuy) / avgBuy) * 100 : 0;
+
+// lógica de decisión real
+let decision = "";
+
+if (weight > 30) {
+decision = "🔴 No comprar (riesgo de concentración alto)";
+}
+else if (weight < 15) {
+decision = "🟢 Compra razonable (riesgo controlado)";
+}
+else {
+decision = "🟡 Neutral (depende de convicción)";
+}
+
+document.getElementById("output").innerHTML = `
+<div class="result">
+
+<h3>${t}</h3>
+
+<p><b>Peso en cartera:</b> ${weight.toFixed(2)}%</p>
+<p><b>Estado:</b> ${decision}</p>
+
+</div>
+`;
+
 }
 
 </script>
