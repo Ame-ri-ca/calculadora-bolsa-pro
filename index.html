@@ -2,177 +2,19 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Alfredo AI Investor</title>
-
-<style>
-body {
-    margin: 0;
-    font-family: Arial;
-    background: #0a0f1c;
-    color: white;
-}
-
-header {
-    padding: 15px;
-    background: #0f172a;
-    text-align: center;
-    font-weight: bold;
-    color: #38bdf8;
-}
-
-.container {
-    max-width: 900px;
-    margin: auto;
-    padding: 15px;
-}
-
-.card {
-    background: #111827;
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 15px;
-}
-
-input {
-    width: 100%;
-    padding: 10px;
-    margin: 6px 0;
-    background: #1f2937;
-    border: none;
-    color: white;
-    border-radius: 6px;
-}
-
-button {
-    width: 100%;
-    padding: 10px;
-    background: #22c55e;
-    border: none;
-    color: white;
-    font-weight: bold;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.result {
-    margin-top: 10px;
-    padding: 12px;
-    background: #0f172a;
-    border-radius: 8px;
-    border: 1px solid #1f2937;
-}
-
-.green { color: #22c55e; }
-.red { color: #ef4444; }
-</style>
+<title>TEST APP</title>
 </head>
 
-<body>
+<body style="font-family: Arial; background:#0a0f1c; color:white;">
 
-<header>🧠 Alfredo AI Investor - ACTIVO</header>
+<h1>TEST OK</h1>
 
-<div class="container">
-
-<div class="card">
-<h3>📊 Agregar posición</h3>
-
-<input id="ticker" placeholder="Ticker">
-<input id="shares" type="number" placeholder="Acciones">
-<input id="buy" type="number" placeholder="Precio compra">
-
-<button onclick="add()">Agregar</button>
-
-<div id="list"></div>
-</div>
-
-<div class="card">
-<h3>💰 Simulación de compra</h3>
-
-<input id="invest" type="number" placeholder="Monto a invertir">
-
-<button onclick="analyze()">Analizar</button>
-
-<div id="result"></div>
-</div>
-
-</div>
+<button onclick="document.body.innerHTML += '<p>CLICK OK</p>'">
+Probar botón
+</button>
 
 <script>
-
-let portfolio = [];
-
-function add() {
-
-let t = document.getElementById("ticker").value;
-let s = parseFloat(document.getElementById("shares").value);
-let b = parseFloat(document.getElementById("buy").value);
-
-if (!t || !s || !b) {
-alert("Completa todos los campos");
-return;
-}
-
-portfolio.push({t, s, b});
-
-render();
-}
-
-function render() {
-
-let html = "";
-
-portfolio.forEach(a => {
-
-let value = a.s * a.b;
-
-html += `
-<p>
-<b>${a.t}</b> — ${a.s} acciones — $${value.toFixed(2)} total invertido
-</p>
-`;
-});
-
-document.getElementById("list").innerHTML = html;
-}
-
-function analyze() {
-
-let invest = parseFloat(document.getElementById("invest").value);
-
-if (!invest || portfolio.length === 0) {
-alert("Agrega posiciones primero");
-return;
-}
-
-let totalShares = portfolio.reduce((a,b)=>a+b.s,0);
-let totalCost = portfolio.reduce((a,b)=>a+(b.s*b.b),0);
-
-let avg = totalCost / totalShares;
-
-let newShares = invest / avg;
-let newAvg = (totalCost + invest) / (totalShares + newShares);
-
-let impact = ((avg - newAvg) / avg) * 100;
-
-let decision = "";
-
-if (impact > 2) decision = "🟢 Buena compra";
-else if (impact > 0) decision = "🟡 Neutral";
-else decision = "🔴 Mala compra";
-
-document.getElementById("result").innerHTML = `
-<div class="result">
-<p><b>Promedio actual:</b> ${avg.toFixed(2)}</p>
-<p><b>Nuevo promedio:</b> ${newAvg.toFixed(2)}</p>
-<p><b>Impacto:</b> ${impact.toFixed(2)}%</p>
-<hr>
-<p><b>Decisión:</b> ${decision}</p>
-</div>
-`;
-
-}
-
+console.log("JS cargado correctamente");
 </script>
 
 </body>
