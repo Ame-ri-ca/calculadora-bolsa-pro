@@ -184,7 +184,7 @@ let result = ((a.price - a.buy) / a.buy) * 100;
 
 let signal = "";
 
-if (result > 10) signal = "🟢 Fortalecida";
+if (result > 10) signal = "🟢 Fortaleza";
 else if (result < -10) signal = "🔴 Debilidad";
 else signal = "🟡 Neutral";
 
@@ -211,7 +211,13 @@ let invest = parseFloat(document.getElementById("newInvest").value);
 
 if (!t || !invest) return;
 
-// cartera total
+// total cartera
+let totalValue = portfolio.reduce((a,b)=>a + (b.s * b.price), 0);
+
+// riesgo
+let weight = (invest / (totalValue + invest)) * 100;
+
+// promedio real
 let totalShares = portfolio.reduce((a,b)=>a + b.s, 0);
 let totalCost = portfolio.reduce((a,b)=>a + (b.s * b.buy), 0);
 
@@ -221,37 +227,28 @@ document.getElementById("output").innerHTML =
 return;
 }
 
-// promedio actual
 let avgPrice = totalCost / totalShares;
 
-// simulación de compra
+// simulación real
 let newShares = invest / avgPrice;
-let newTotalShares = totalShares + newShares;
-let newTotalCost = totalCost + invest;
+let newAvg = (totalCost + invest) / (totalShares + newShares);
 
-let newAvg = newTotalCost / newTotalShares;
-
-// impacto real
 let improvement = ((avgPrice - newAvg) / avgPrice) * 100;
 
-// riesgo
-let totalMarketValue = portfolio.reduce((a,b)=>a + (b.s * b.price), 0);
-let weight = (invest / (totalMarketValue + invest)) * 100;
-
-// decisión
+// decisión real
 let decision = "";
 
 if (improvement > 2 && weight < 25) {
 decision = "🟢 DECISIÓN POSITIVA: mejora tu posición";
 }
 else if (improvement > 0 && weight < 35) {
-decision = "🟡 DECISIÓN NEUTRA: leve mejora";
+decision = "🟡 DECISIÓN NEUTRA: mejora leve";
 }
 else if (improvement <= 0) {
-decision = "🔴 DECISIÓN NEGATIVA: empeora tu precio promedio";
+decision = "🔴 DECISIÓN NEGATIVA: empeora tu promedio";
 }
 else if (weight > 35) {
-decision = "🔴 RIESGO ALTO: demasiada exposición";
+decision = "🔴 RIESGO ALTO: concentración excesiva";
 }
 else {
 decision = "🟡 SIN SEÑAL CLARA";
@@ -262,7 +259,7 @@ document.getElementById("output").innerHTML = `
 
 <h3>${t}</h3>
 
-<p><b>Precio promedio actual:</b> ${avgPrice.toFixed(2)}</p>
+<p><b>Promedio actual:</b> ${avgPrice.toFixed(2)}</p>
 <p><b>Nuevo promedio:</b> ${newAvg.toFixed(2)}</p>
 <p><b>Mejora:</b> ${improvement.toFixed(2)}%</p>
 <p><b>Riesgo:</b> ${weight.toFixed(2)}%</p>
