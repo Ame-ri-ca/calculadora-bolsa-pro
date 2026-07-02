@@ -102,6 +102,7 @@ td {
 .yellow { color: #facc15; font-weight: bold; }
 .red { color: #ef4444; font-weight: bold; }
 </style>
+
 </head>
 
 <body>
@@ -119,7 +120,7 @@ td {
 <input id="buy" type="number" placeholder="Precio de compra">
 <input id="price" type="number" placeholder="Precio actual">
 
-<button onclick="add()">Agregar</button>
+<button onclick="add()">Agregar posición</button>
 
 <table>
 <thead>
@@ -135,9 +136,9 @@ td {
 </table>
 </div>
 
-<!-- DECISION -->
+<!-- DECISIÓN -->
 <div class="card">
-<h3>💰 Evaluar nueva compra</h3>
+<h3>💰 Decisión de inversión</h3>
 
 <input id="newTicker" placeholder="Ticker">
 <input id="newInvest" type="number" placeholder="Monto a invertir">
@@ -183,9 +184,9 @@ let result = ((a.price - a.buy) / a.buy) * 100;
 
 let signal = "";
 
-if (result <= -15) signal = "🟢 Acumular";
-else if (result >= 20) signal = "🔴 Reducir";
-else signal = "🟡 Mantener";
+if (result > 10) signal = "🟢 Fortalecida";
+else if (result < -10) signal = "🔴 Debilidad";
+else signal = "🟡 Neutral";
 
 html += `
 <tr>
@@ -210,31 +211,50 @@ let invest = parseFloat(document.getElementById("newInvest").value);
 
 if (!t || !invest) return;
 
-// total cartera
-let totalValue = portfolio.reduce((acc, a) => acc + (a.s * a.price), 0);
+// cartera total
+let totalShares = portfolio.reduce((a,b)=>a + b.s, 0);
+let totalCost = portfolio.reduce((a,b)=>a + (b.s * b.buy), 0);
+
+if (totalShares === 0) {
+document.getElementById("output").innerHTML =
+`<div class="result">⚠️ Agrega posiciones primero</div>`;
+return;
+}
+
+// promedio actual
+let avgPrice = totalCost / totalShares;
+
+// simulación de compra
+let newShares = invest / avgPrice;
+let newTotalShares = totalShares + newShares;
+let newTotalCost = totalCost + invest;
+
+let newAvg = newTotalCost / newTotalShares;
+
+// impacto real
+let improvement = ((avgPrice - newAvg) / avgPrice) * 100;
 
 // riesgo
-let weight = (invest / (totalValue + invest)) * 100;
+let totalMarketValue = portfolio.reduce((a,b)=>a + (b.s * b.price), 0);
+let weight = (invest / (totalMarketValue + invest)) * 100;
 
-// promedio de compra
-let avgBuy = portfolio.length > 0
-? portfolio.reduce((a,b)=>a+b.buy,0)/portfolio.length
-: 0;
-
-// evaluación real del precio
-let priceDiff = avgBuy ? ((avgBuy - avgBuy) / avgBuy) * 100 : 0;
-
-// lógica de decisión real
+// decisión
 let decision = "";
 
-if (weight > 30) {
-decision = "🔴 No comprar (riesgo de concentración alto)";
+if (improvement > 2 && weight < 25) {
+decision = "🟢 DECISIÓN POSITIVA: mejora tu posición";
 }
-else if (weight < 15) {
-decision = "🟢 Compra razonable (riesgo controlado)";
+else if (improvement > 0 && weight < 35) {
+decision = "🟡 DECISIÓN NEUTRA: leve mejora";
+}
+else if (improvement <= 0) {
+decision = "🔴 DECISIÓN NEGATIVA: empeora tu precio promedio";
+}
+else if (weight > 35) {
+decision = "🔴 RIESGO ALTO: demasiada exposición";
 }
 else {
-decision = "🟡 Neutral (depende de convicción)";
+decision = "🟡 SIN SEÑAL CLARA";
 }
 
 document.getElementById("output").innerHTML = `
@@ -242,8 +262,14 @@ document.getElementById("output").innerHTML = `
 
 <h3>${t}</h3>
 
-<p><b>Peso en cartera:</b> ${weight.toFixed(2)}%</p>
-<p><b>Estado:</b> ${decision}</p>
+<p><b>Precio promedio actual:</b> ${avgPrice.toFixed(2)}</p>
+<p><b>Nuevo promedio:</b> ${newAvg.toFixed(2)}</p>
+<p><b>Mejora:</b> ${improvement.toFixed(2)}%</p>
+<p><b>Riesgo:</b> ${weight.toFixed(2)}%</p>
+
+<hr>
+
+<p><b>DECISIÓN:</b> ${decision}</p>
 
 </div>
 `;
