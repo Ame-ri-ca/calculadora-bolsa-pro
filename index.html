@@ -1,10 +1,130 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>Alfredo AI Investor</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alfredo AI Investor</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #0a0f1c;
+    color: white;
+}
+
+header {
+    padding: 15px;
+    background: #0f172a;
+    text-align: center;
+    font-weight: bold;
+    color: #38bdf8;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 15px;
+}
+
+.card {
+    background: #111827;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    background: #1f2937;
+    border: none;
+    color: white;
+    border-radius: 6px;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background: #22c55e;
+    border: none;
+    color: white;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.result {
+    margin-top: 10px;
+    padding: 10px;
+    background: #0f172a;
+    border-radius: 6px;
+    border: 1px solid #1f2937;
+}
+</style>
 </head>
+
 <body>
-  <h1>Alfredo AI Investor</h1>
-  <p>Sistema activo ✔</p>
+
+<header>🧠 Alfredo AI Investor</header>
+
+<div class="container">
+
+<div class="card">
+<h3>📊 Portafolio (base)</h3>
+
+<input id="ticker" placeholder="Ticker">
+<input id="shares" type="number" placeholder="Acciones">
+<input id="buy" type="number" placeholder="Precio compra">
+<input id="price" type="number" placeholder="Precio actual">
+
+<button onclick="add()">Agregar</button>
+
+<div id="list"></div>
+</div>
+
+</div>
+
+<script>
+
+let portfolio = [];
+
+function add() {
+
+let t = document.getElementById("ticker").value;
+let s = parseFloat(document.getElementById("shares").value);
+let b = parseFloat(document.getElementById("buy").value);
+let p = parseFloat(document.getElementById("price").value);
+
+if (!t || !s || !b || !p) return;
+
+portfolio.push({t, s, b, p});
+
+render();
+}
+
+function render() {
+
+let html = "";
+
+portfolio.forEach(a => {
+
+let value = a.s * a.p;
+let result = ((a.p - a.b) / a.b) * 100;
+
+html += `
+<p>
+<b>${a.t}</b> — $${value.toFixed(2)} — ${result.toFixed(2)}%
+</p>
+`;
+});
+
+document.getElementById("list").innerHTML = html;
+
+}
+
+</script>
+
 </body>
 </html>
