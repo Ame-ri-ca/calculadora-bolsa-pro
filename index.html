@@ -37,7 +37,7 @@ header {
 input {
     width: 100%;
     padding: 10px;
-    margin: 5px 0;
+    margin: 6px 0;
     background: #1f2937;
     border: none;
     color: white;
@@ -57,11 +57,17 @@ button {
 
 .result {
     margin-top: 10px;
-    padding: 10px;
+    padding: 12px;
     background: #0f172a;
-    border-radius: 6px;
     border: 1px solid #1f2937;
+    border-radius: 8px;
 }
+
+.green { color: #22c55e; }
+.red { color: #ef4444; }
+.yellow { color: #facc15; }
+
+p { margin: 6px 0; }
 </style>
 </head>
 
@@ -72,16 +78,26 @@ button {
 <div class="container">
 
 <div class="card">
-<h3>📊 Portafolio (base)</h3>
+<h3>📊 Portafolio</h3>
 
 <input id="ticker" placeholder="Ticker">
 <input id="shares" type="number" placeholder="Acciones">
 <input id="buy" type="number" placeholder="Precio compra">
 <input id="price" type="number" placeholder="Precio actual">
 
-<button onclick="add()">Agregar</button>
+<button onclick="add()">Agregar posición</button>
 
 <div id="list"></div>
+</div>
+
+<div class="card">
+<h3>💰 Simulación de compra</h3>
+
+<input id="invest" type="number" placeholder="Monto a invertir">
+
+<button onclick="analyze()">Analizar compra</button>
+
+<div id="result"></div>
 </div>
 
 </div>
@@ -100,7 +116,6 @@ let p = parseFloat(document.getElementById("price").value);
 if (!t || !s || !b || !p) return;
 
 portfolio.push({t, s, b, p});
-
 render();
 }
 
@@ -113,14 +128,74 @@ portfolio.forEach(a => {
 let value = a.s * a.p;
 let result = ((a.p - a.b) / a.b) * 100;
 
+let color = result >= 0 ? "green" : "red";
+
 html += `
 <p>
-<b>${a.t}</b> — $${value.toFixed(2)} — ${result.toFixed(2)}%
+<b>${a.t}</b> — $${value.toFixed(2)} — <span class="${color}">${result.toFixed(2)}%</span>
 </p>
 `;
 });
 
 document.getElementById("list").innerHTML = html;
+}
+
+function analyze() {
+
+let invest = parseFloat(document.getElementById("invest").value);
+
+if (!invest || portfolio.length === 0) return;
+
+// totales
+let totalShares = portfolio.reduce((a,b)=>a + b.s, 0);
+let totalCost = portfolio.reduce((a,b)=>a + (b.s * b.b), 0);
+
+let avg = totalCost / totalShares;
+
+// simulación compra
+let newShares = invest / avg;
+let newTotalShares = totalShares + newShares;
+let newTotalCost = totalCost + invest;
+
+let newAvg = newTotalCost / newTotalShares;
+
+// impacto
+let impact = ((avg - newAvg) / avg) * 100;
+
+// riesgo
+let marketValue = portfolio.reduce((a,b)=>a + (b.s * b.p), 0);
+let risk = (invest / (marketValue + invest)) * 100;
+
+// decisión
+let decision = "";
+
+if (impact > 2 && risk < 25) {
+decision = "🟢 BUENA COMPRA (mejora posición)";
+}
+else if (impact > 0 && risk < 35) {
+decision = "🟡 COMPRA NEUTRA (mejora leve)";
+}
+else if (impact <= 0) {
+decision = "🔴 MALA COMPRA (empeora promedio)";
+}
+if (risk > 35) {
+decision = "🔴 RIESGO ALTO (exceso de exposición)";
+}
+
+document.getElementById("result").innerHTML = `
+<div class="result">
+
+<p><b>Promedio actual:</b> ${avg.toFixed(2)}</p>
+<p><b>Nuevo promedio:</b> ${newAvg.toFixed(2)}</p>
+<p><b>Impacto:</b> ${impact.toFixed(2)}%</p>
+<p><b>Riesgo:</b> ${risk.toFixed(2)}%</p>
+
+<hr>
+
+<p><b>DECISIÓN:</b> ${decision}</p>
+
+</div>
+`;
 
 }
 
