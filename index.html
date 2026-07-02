@@ -11,8 +11,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0f1c">
 
-<<!-- <link rel="apple-touch-icon" href="icon.png"> -->
-
 <style>
 body {
     margin: 0;
@@ -63,16 +61,14 @@ button {
     color: white;
     font-weight: bold;
     cursor: pointer;
-    margin-top: 5px;
 }
 
 .delete-btn {
     background: #ef4444;
-    padding: 5px 8px;
-    font-size: 12px;
-    border-radius: 6px;
     border: none;
+    padding: 4px 8px;
     color: white;
+    border-radius: 6px;
     cursor: pointer;
 }
 
@@ -106,7 +102,6 @@ td {
 .yellow { color: #facc15; font-weight: bold; }
 .red { color: #ef4444; font-weight: bold; }
 </style>
-
 </head>
 
 <body>
@@ -117,21 +112,21 @@ td {
 
 <!-- CARTERA -->
 <div class="card">
-<h3>📦 Tu portafolio</h3>
+<h3>📦 Portafolio</h3>
 
 <input id="ticker" placeholder="Ticker">
 <input id="shares" type="number" placeholder="Acciones">
 <input id="buy" type="number" placeholder="Precio de compra">
 <input id="price" type="number" placeholder="Precio actual">
 
-<button onclick="add()">Agregar acción</button>
+<button onclick="add()">Agregar</button>
 
 <table>
 <thead>
 <tr>
 <th>Acción</th>
 <th>Valor</th>
-<th>Ganancia %</th>
+<th>Resultado</th>
 <th>Señal</th>
 <th></th>
 </tr>
@@ -140,9 +135,9 @@ td {
 </table>
 </div>
 
-<!-- ANALISIS -->
+<!-- DECISION -->
 <div class="card">
-<h3>💰 Nueva inversión</h3>
+<h3>💰 Evaluar nueva compra</h3>
 
 <input id="newTicker" placeholder="Ticker">
 <input id="newInvest" type="number" placeholder="Monto a invertir">
@@ -184,19 +179,19 @@ let html = "";
 portfolio.forEach((a, i) => {
 
 let value = a.s * a.price;
-let profit = ((a.price - a.buy) / a.buy) * 100;
+let result = ((a.price - a.buy) / a.buy) * 100;
 
 let signal = "";
 
-if (profit <= -15) signal = "🟢 BUY";
-else if (profit >= 20) signal = "🔴 SELL";
-else signal = "🟡 HOLD";
+if (result <= -15) signal = "🟢 Acumular";
+else if (result >= 20) signal = "🔴 Reducir";
+else signal = "🟡 Mantener";
 
 html += `
 <tr>
 <td>${a.t}</td>
 <td>$${value.toFixed(2)}</td>
-<td class="${profit >= 0 ? 'green' : 'red'}">${profit.toFixed(2)}%</td>
+<td class="${result >= 0 ? 'green' : 'red'}">${result.toFixed(2)}%</td>
 <td>${signal}</td>
 <td><button class="delete-btn" onclick="remove(${i})">X</button></td>
 </tr>
@@ -215,44 +210,31 @@ let invest = parseFloat(document.getElementById("newInvest").value);
 
 if (!t || !invest) return;
 
-let total = portfolio.reduce((acc, a) => acc + (a.s * a.price), 0);
-
-let weight = (invest / (total + invest)) * 100;
+// total cartera
+let totalValue = portfolio.reduce((acc, a) => acc + (a.s * a.price), 0);
 
 // riesgo
-let risk = "";
+let weight = (invest / (totalValue + invest)) * 100;
 
-if (weight > 30) risk = "🔴 Alta concentración";
-else if (weight > 15) risk = "🟡 Riesgo medio";
-else risk = "🟢 Riesgo controlado";
-
-// promedio precio compra
+// promedio de compra
 let avgBuy = portfolio.length > 0
 ? portfolio.reduce((a,b)=>a+b.buy,0)/portfolio.length
 : 0;
 
-// evaluación automática de precio
-let priceDiff = ((avgBuy - avgBuy) / avgBuy) * 100;
+// evaluación real del precio
+let priceDiff = avgBuy ? ((avgBuy - avgBuy) / avgBuy) * 100 : 0;
 
-let entry = "🟡 Zona neutra";
-
-if (priceDiff <= -15) entry = "🟢 Precio atractivo (descuento)";
-else if (priceDiff >= 20) entry = "🔴 Entrada cara";
-
-// decisión final
+// lógica de decisión real
 let decision = "";
 
 if (weight > 30) {
-decision = "❌ No recomendado (riesgo alto)";
+decision = "🔴 No comprar (riesgo de concentración alto)";
 }
-else if (entry.includes("descuento") && weight < 20) {
-decision = "🟢 Buena oportunidad de entrada";
-}
-else if (entry.includes("cara")) {
-decision = "❌ Evitar compra";
+else if (weight < 15) {
+decision = "🟢 Compra razonable (riesgo controlado)";
 }
 else {
-decision = "🟡 Decisión neutral";
+decision = "🟡 Neutral (depende de convicción)";
 }
 
 document.getElementById("output").innerHTML = `
@@ -261,8 +243,7 @@ document.getElementById("output").innerHTML = `
 <h3>${t}</h3>
 
 <p><b>Peso en cartera:</b> ${weight.toFixed(2)}%</p>
-<p><b>Precio:</b> ${entry}</p>
-<p><b>Decisión:</b> ${decision}</p>
+<p><b>Estado:</b> ${decision}</p>
 
 </div>
 `;
