@@ -2,19 +2,121 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>TEST APP</title>
+<title>Alfredo AI Investor</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #0a0f1c;
+    color: white;
+}
+
+header {
+    padding: 15px;
+    background: #0f172a;
+    text-align: center;
+    font-weight: bold;
+    color: #38bdf8;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 15px;
+}
+
+.card {
+    background: #111827;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0;
+    background: #1f2937;
+    border: none;
+    color: white;
+    border-radius: 6px;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background: #22c55e;
+    border: none;
+    color: white;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.result {
+    margin-top: 10px;
+    padding: 10px;
+    background: #0f172a;
+    border-radius: 8px;
+}
+</style>
 </head>
 
-<body style="font-family: Arial; background:#0a0f1c; color:white;">
+<body>
 
-<h1>TEST OK</h1>
+<header>🧠 Alfredo AI Investor</header>
 
-<button onclick="document.body.innerHTML += '<p>CLICK OK</p>'">
-Probar botón
-</button>
+<div class="container">
+
+<div class="card">
+<h3>📊 Portafolio</h3>
+
+<input id="ticker" placeholder="Ticker">
+<input id="shares" type="number" placeholder="Acciones">
+<input id="buy" type="number" placeholder="Precio compra">
+
+<button onclick="add()">Agregar</button>
+
+<div id="list"></div>
+</div>
+
+</div>
 
 <script>
-console.log("JS cargado correctamente");
+
+let portfolio = [];
+
+function add() {
+
+let t = document.getElementById("ticker").value;
+let s = parseFloat(document.getElementById("shares").value);
+let b = parseFloat(document.getElementById("buy").value);
+
+if (!t || !s || !b) return;
+
+portfolio.push({t, s, b});
+render();
+}
+
+function render() {
+
+let html = "";
+
+portfolio.forEach(a => {
+
+let invested = a.s * a.b;
+
+html += `
+<p>
+<b>${a.t}</b> — ${a.s} acciones — $${invested.toFixed(2)} invertido
+</p>
+`;
+});
+
+document.getElementById("list").innerHTML = html;
+}
+
 </script>
 
 </body>
