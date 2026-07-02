@@ -1,237 +1,28 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+name: Deploy Pages
 
-<title>Alfredo AI Investor</title>
+on:
+  push:
+    branches: [ "main" ]
 
-<style>
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #0a0f1c;
-    color: #e5e7eb;
-}
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
-header {
-    background: #0f172a;
-    padding: 15px;
-    text-align: center;
-    font-size: 20px;
-    font-weight: bold;
-    color: #38bdf8;
-}
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-.container {
-    max-width: 900px;
-    margin: auto;
-    padding: 15px;
-}
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
-.card {
-    background: #111827;
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #1f2937;
-}
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
 
-input {
-    width: 100%;
-    padding: 10px;
-    margin: 6px 0;
-    border-radius: 6px;
-    border: none;
-    background: #1f2937;
-    color: white;
-}
-
-button {
-    width: 100%;
-    padding: 10px;
-    border-radius: 6px;
-    border: none;
-    background: #22c55e;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-th {
-    color: #38bdf8;
-    border-bottom: 1px solid #1f2937;
-    padding: 10px;
-}
-
-td {
-    text-align: center;
-    padding: 10px;
-    border-bottom: 1px solid #1f2937;
-}
-
-.result {
-    margin-top: 15px;
-    padding: 12px;
-    border-radius: 8px;
-    background: #0f172a;
-    border: 1px solid #1f2937;
-}
-
-.green { color: #22c55e; }
-.red { color: #ef4444; }
-.yellow { color: #facc15; }
-</style>
-</head>
-
-<body>
-
-<header>🧠 Alfredo AI Investor</header>
-
-<div class="container">
-
-<!-- CARTERA -->
-<div class="card">
-<h3>📦 Portafolio</h3>
-
-<input id="ticker" placeholder="Ticker">
-<input id="shares" type="number" placeholder="Acciones">
-<input id="buy" type="number" placeholder="Precio compra">
-<input id="price" type="number" placeholder="Precio actual">
-
-<button onclick="add()">Agregar</button>
-
-<table>
-<thead>
-<tr>
-<th>Activo</th>
-<th>Valor</th>
-<th>Resultado</th>
-</tr>
-</thead>
-<tbody id="portfolio"></tbody>
-</table>
-</div>
-
-<!-- DECISIÓN -->
-<div class="card">
-<h3>💰 Evaluar inversión</h3>
-
-<input id="newTicker" placeholder="Ticker">
-<input id="newInvest" type="number" placeholder="Monto a invertir">
-
-<button onclick="analyze()">Analizar</button>
-
-<div id="output"></div>
-</div>
-
-</div>
-
-<script>
-
-let portfolio = [];
-
-function add() {
-
-let t = document.getElementById("ticker").value;
-let s = parseFloat(document.getElementById("shares").value);
-let b = parseFloat(document.getElementById("buy").value);
-let p = parseFloat(document.getElementById("price").value);
-
-if (!t || !s || !b || !p) return;
-
-portfolio.push({t, s, b, p});
-render();
-}
-
-function render() {
-
-let html = "";
-
-portfolio.forEach(a => {
-
-let value = a.s * a.p;
-let result = ((a.p - a.b) / a.b) * 100;
-
-html += `
-<tr>
-<td>${a.t}</td>
-<td>$${value.toFixed(2)}</td>
-<td class="${result >= 0 ? 'green' : 'red'}">${result.toFixed(2)}%</td>
-</tr>
-`;
-});
-
-document.getElementById("portfolio").innerHTML = html;
-}
-
-function analyze() {
-
-let invest = parseFloat(document.getElementById("newInvest").value);
-
-if (!invest || portfolio.length === 0) return;
-
-// total cartera
-let totalShares = portfolio.reduce((a,b)=>a+b.s,0);
-let totalCost = portfolio.reduce((a,b)=>a+(b.s*b.b),0);
-
-// promedio actual
-let avg = totalCost / totalShares;
-
-// simulación compra
-let newShares = invest / avg;
-let newTotalShares = totalShares + newShares;
-let newTotalCost = totalCost + invest;
-
-let newAvg = newTotalCost / newTotalShares;
-
-// mejora
-let improvement = ((avg - newAvg) / avg) * 100;
-
-// riesgo
-let portfolioValue = portfolio.reduce((a,b)=>a+(b.s*b.p),0);
-let weight = (invest / (portfolioValue + invest)) * 100;
-
-// decisión simple y clara
-let decision = "";
-
-if (improvement > 2 && weight < 25) {
-decision = "🟢 BUENA COMPRA (mejora posición)";
-}
-else if (improvement > 0) {
-decision = "🟡 COMPRA NEUTRA";
-}
-else if (improvement <= 0) {
-decision = "🔴 MALA COMPRA (empeora promedio)";
-}
-if (weight > 35) {
-decision = "🔴 RIESGO ALTO (sobreexposición)";
-}
-
-document.getElementById("output").innerHTML = `
-<div class="result">
-
-<p><b>Promedio actual:</b> ${avg.toFixed(2)}</p>
-<p><b>Nuevo promedio:</b> ${newAvg.toFixed(2)}</p>
-<p><b>Mejora:</b> ${improvement.toFixed(2)}%</p>
-<p><b>Riesgo:</b> ${weight.toFixed(2)}%</p>
-
-<hr>
-
-<p><b>DECISIÓN:</b> ${decision}</p>
-
-</div>
-`;
-
-}
-
-</script>
-
-</body>
-</html>
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
